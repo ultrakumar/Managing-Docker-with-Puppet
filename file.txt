@@ -1,0 +1,61 @@
+=> CentOS machine is used in this project
+
+=> Login as root in the host server that contains puppet agent
+
+=> Install the garethr-docker module using this command in the host machine from the forge
+-> puppet module install garethr-docker
+
+=> Create the directory src/puppet/modules/docker_demo
+-> mkdir -p src/puppet/modules/docker_demo
+
+=> change to the directory created above and create a puppet manifest to install docker
+-> vi install.pp 
+-> class { 'docker':
+	dns => '8.8.8.8',
+    }
+
+The above manifest customizes the docker deployment with a custom DNS server.
+
+=> Run the puppet parser validate on the install.pp file to check for any errors 
+-> puppet parser validate install.pp
+
+=> Run puppet apply 
+-> puppet apply install.pp
+
+=> We are now ready to work with docker, let's start by downloading an image. Create a file image_pull.pp in the same directory
+
+-> docker::image { 'ubuntu':
+	ensure     => 'present',
+	image_tag  => 'trusty'
+    }
+
+=> Run the puppet parser validate on image_pull.pp and if it has no erros run puppet apply to download the ubuntu image
+-> puppet apply image_pull.pp 
+
+=> If the command is succesfull, we will be having ubuntu image in our machine. Run this command to check the images in the system
+-> docker images
+
+=> create a file in the same directory "run_container.pp" 
+=> since we have downloaded the image, we can spin up the container
+-> docker::run { 'container':
+	ensure   => 'present',
+	image    => 'ubuntu',
+	command  => 'bin/sh -c "while true; do echo test container sleep 1; done';,
+    }
+
+-> puppet parser validate run_container.pp
+-> puppet apply run_container.pp
+
+=> To check the container that we created
+-> docker ps -a
+
+=> To remove the container, create a new file "remove_container.pp"
+-> docker::run { 'run_container':
+	ensure   => 'absent',
+	image    => 'ubuntu',
+	command  => 'bin/sh -c "while true; do echo test container sleep 1; done";,
+    }
+
+-> puppet parser validate remove_container.pp
+-> puppet apply remove_container.pp
+
